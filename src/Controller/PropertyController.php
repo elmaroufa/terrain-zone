@@ -3,11 +3,15 @@
 namespace App\Controller;
 
 use App\Entity\Property;
+use App\Entity\PropertySearch;
 use App\Repository\PropertyRepository;
 use  Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\Routing\Annotation\Route;
+use Knp\Component\Pager\PaginatorInterface;
+use Symfony\Component\HttpFoundation\Request;
+use App\Form\PropertySearchType;
 
 class PropertyController extends AbstractController {
 
@@ -29,28 +33,21 @@ class PropertyController extends AbstractController {
      * @Route("/bien",name="property.index")
      * @return Response
      */
-    public function index():Response
+    public function index(PaginatorInterface $paginator,Request $request):Response
     {
-       /* $property = new Property();
-        $property->setTitle("Maison de boukar")
-                 ->setPrice(3000000)
-                 ->setRooms(4)
-                 ->setBedrooms(3)
-                 ->setDescription("Ma description")
-                 ->setSurface(60)
-                 ->setFloor(4)
-                 ->setHeat(1)
-                 ->setCity('GUIDER')
-                 ->setAddress('QUARTIER SARA')
-                 ->setPostalCode("12234243");
-                 $em = $this->getDoctrine()->getManager();
-                 $em->persist($property);
-                 $em->flush(); */
+        $search = new PropertySearch();
+        $form = $this->createForm(PropertySearchType::class,$search);
+        $form->handleRequest($request);
+        $properties = $paginator->paginate(
+            $this->repository->findAllVisibleQuery($search),
+            $request->query->getInt('page',1),
+            9
+        );
        // $properties = $this->repository->findAllVisible();
-        //dump($properties);
-
         return $this->render('pages/property.html.twig',[
-            'current_menu' => 'properties'
+            'current_menu' => 'properties',
+            'properties' => $properties,
+            'form' => $form->createView()
         ]);
     }
  /**
